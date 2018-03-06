@@ -1,19 +1,34 @@
+import uuid
 
-client_list = []
+clients_data = {}
+groups = {}
 
-def string():
-        return 'sample_string'
 def register(ip, port, username):
-    client_list.append((ip, port, username))
+    id = uuid.uuid4()
+    clients_data[id] = (ip, port, username)
+    return str(id)
+
+#def list_groups():
+
+#def list_members(group_name):
+
+#def join_groups(group_name):
+    #groups[group_name].append()
+#def exit_groups(group_name):
+
+#def quit(id):
+
+
 
 
 def proccess_message(message):
     if (message.startswith('!')):
-        command = message.split('-')
+        command = message.split(' ')
         cmd = command[0].lstrip('!')
         args_size = len(command) - 1
-
-        print "Command: " + cmd
+        print "Full Command: " + str(command)
+        print "ARGS size: " + str(args_size)
+        print "CMD: " + cmd
 
         ## check for errors
         if (cmd == "r" and args_size != 3):

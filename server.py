@@ -9,27 +9,27 @@ socket.bind("tcp://*:5555")
 while True:
     #  Wait for next request from client
     message = socket.recv()
-    print("Received message: %s" % message)
+    #socket.fileno()
+    print "SOCKET: " + str(socket.fileno())
+    print("Received message: %s" %message)
 
-    #  Do some 'work'
-    time.sleep(1)
+
 
     cmd, args = tracker.proccess_message(message)
     if (cmd == "r"):
         print "Cmd: " + cmd + " args_size: " + str(len(args))
-        tracker.register(args[0], args[1], args[2])
-        print tracker.client_list
-        
+        id = tracker.register(args[0], args[1], args[2])
+        print "Id: ", id
+        print tracker.clients_data
+
         print "Register Succesfull"
-        reply = "Register Succesfull"
+        reply = "SUCESS_" + id
+    elif (cmd == "lg"):
+        reply = "LG test reply"
     else:
         print "Invalid arguments"
-        reply = "Invalid arguments"
-
-
-
-    socket.send(reply)
+        reply = "FAIL_Invalid arguments"
 
 
     #  Send reply back to client
-    #socket.send(b"Register Succesfull")
+    socket.send(reply)
