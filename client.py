@@ -2,6 +2,8 @@ import zmq
 
 host = 'distrib-1'
 host = 'localhost'
+port = 3000
+username = 'ifouros'
 
 context = zmq.Context()
 
@@ -11,9 +13,9 @@ socket = context.socket(zmq.REQ)
 #socket.connect("tcp://distrib-1:5555")
 socket.connect("tcp://" + host  + ":5555")
 
-for request in range(10):
+for request in range(2):
     print("Sending request %s " % request)
-    socket.send(b"Hey: " + str(request) )
+    socket.send(b"!r-%s-%s-%s" %(host, port, username))
 
     #  Get the reply.
     message = socket.recv()
