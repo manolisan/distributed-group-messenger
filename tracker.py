@@ -37,7 +37,30 @@ def join_groups(group_name, id):
         members_data.append((client_id, ) + clients_data[client_id])
     return  members_data
 
-#def exit_groups(group_name):
+def exit_group(group_name, id):
+    if (not groups_members.has_key(group_name)):
+        return False
+
+    try:
+        groups_members[group_name].remove(id)
+    except ValueError:
+        print "EXIT_GROUP: User, not member of requested group"
+        return False
+
+    # if the group is empty delete it andn remove the corresponding group
+    if (groups_members[group_name] == []):
+        del groups_members[group_name]
+
+        try:
+            groups.remove(group_name)
+        except ValueError:
+            print "EXIT_GROUP: Group, not found"
+            return False
+
+    # Client to exit the group found, everything ok
+    print "EXIT_GROUP-FOUND"
+    return True
+
 
 #def quit(id):
 

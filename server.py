@@ -34,7 +34,8 @@ while True:
         print "Join groups return: ", members_list
         reply = str(members_list)
     elif (cmd == "e"):
-        reply = "E test reply"
+        exit = tracker.exit_group(args[0], args[1])
+        reply = "SUCESS_EXIT GROUP" if exit else "FAIL_EXIT GROUP"
     elif (cmd == "q"):
         reply = "Q test reply"
 
