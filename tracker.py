@@ -18,6 +18,8 @@ def list_groups():
     return groups
 
 def list_members(group_name):
+    if (not groups_members.has_key(group_name)):
+        return []
     members_ids = groups_members[group_name]
     members_names = []
     for member_id in members_ids:
@@ -33,8 +35,10 @@ def join_groups(group_name, id):
         groups.append(group_name)
 
     # now the group exists, (even if it's a null group)
-    # so add the user to the group
-    groups_members[group_name].append(id)
+    # first check if the user is ALREADY in the group
+    # then add the user to the group only once!
+    if id not in groups_members[group_name]:
+        groups_members[group_name].append(id)
 
     # and then return the full list of members
     members_data = []
@@ -83,6 +87,7 @@ def quit(id):
 
 def proccess_message(message):
     if (message.startswith('!')):
+        # message IS a command
         command = message.split(' ')
         cmd = command[0].lstrip('!')
         args_size = len(command) - 1
@@ -110,6 +115,11 @@ def proccess_message(message):
         ## return command ensuring that it has correct arguments
         return cmd, command[1:]
 
+    else:
+        # message is NOT a command
+        # return just null list for now
+        return [],[]
+
 ## ---------------------------- Execute command ----------------------------
 
 def execute(cmd, args):
@@ -123,7 +133,7 @@ def execute(cmd, args):
         out = str(active_groups)
     elif (cmd == "lm"):
         usernames_group = list_members(args[0])
-        out = str(usernames_group)
+        out = str(usernames_group) if usernames_group else "FAIL_LIST MEMBERS"
     elif (cmd == "j"):
         members_list = join_groups(args[0], args[1])
         out = str(members_list)
