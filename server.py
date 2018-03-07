@@ -9,27 +9,42 @@ socket.bind("tcp://*:5555")
 while True:
     #  Wait for next request from client
     message = socket.recv()
-    #socket.fileno()
-    print "SOCKET: " + str(socket.fileno())
-    print("Received message: %s" %message)
-
-
+    print ("------------------------")
+    print ("-->Received message: %s" %message)
 
     cmd, args = tracker.proccess_message(message)
+    print "-->EXECUTE CMD"
+
     if (cmd == "r"):
-        print "Cmd: " + cmd + " args_size: " + str(len(args))
         id = tracker.register(args[0], args[1], args[2])
-        print "Id: ", id
-        print tracker.clients_data
-
-        print "Register Succesfull"
         reply = "SUCESS_" + id
+        print "ID: ", id
+        print "TRACKER_CLIENT_DATA: ", tracker.clients_data
+
     elif (cmd == "lg"):
+        active_groups = tracker.list_groups()
+        print "ACTIVE GROUPS: ", active_groups
         reply = "LG test reply"
-    else:
+    elif (cmd == "lm"):
+        reply = "LM test reply"
+    elif (cmd == "j"):
+        members_list = tracker.join_groups(args[0], args[1])
+        print "Join groups return: ", str(members_list)
+        reply = "J (join group) test reply"
+    elif (cmd == "e"):
+        reply = "E test reply"
+    elif (cmd == "q"):
+        reply = "Q test reply"
+
+
+        ## check for errors
+    elif (cmd == "Invalid arguments"):
         print "Invalid arguments"
-        reply = "FAIL_Invalid arguments"
+        reply = "FAIL_Invalid argumentss"
+    else:
+        print "Invalid command"
+        reply = "FAIL_Invalid command"
 
-
+    print "-->END CMD"
     #  Send reply back to client
     socket.send(reply)
