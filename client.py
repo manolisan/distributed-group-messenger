@@ -30,7 +30,7 @@ else:
 # client give commands from stdin
 while True:
     print ("------------------------")
-    line = sys.stdin.readline()
+    line = raw_input("[%s]>" %username)
     user_input = line.rstrip("\n ")
     user_input = ' '.join(user_input.split())
     print("REQUEST: [ %s ]" %user_input)
