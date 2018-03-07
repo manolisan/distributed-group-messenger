@@ -39,6 +39,9 @@ def join_groups(group_name, id):
     # then add the user to the group only once!
     if id not in groups_members[group_name]:
         groups_members[group_name].append(id)
+    else:
+        # alredy a member, just return a null list
+        return []
 
     # and then return the full list of members
     members_data = []
@@ -130,13 +133,13 @@ def execute(cmd, args):
         out = "SUCESS_" + id
     elif (cmd == "lg"):
         active_groups = list_groups()
-        out = str(active_groups)
+        out = "SUCESS_" + str(active_groups)
     elif (cmd == "lm"):
         usernames_group = list_members(args[0])
-        out = str(usernames_group) if usernames_group else "FAIL_LIST MEMBERS"
+        out = ("SUCESS_" + str(usernames_group) ) if usernames_group else "FAIL_LIST MEMBERS"
     elif (cmd == "j"):
         members_list = join_groups(args[0], args[1])
-        out = str(members_list)
+        out = ("SUCESS_" + str(members_list) ) if members_list else "FAIL_JOIN alredy member"
     elif (cmd == "e"):
         exit = exit_group(args[0], args[1])
         out = "SUCESS_EXIT GROUP" if exit else "FAIL_EXIT GROUP"
