@@ -1,9 +1,10 @@
 import zmq
+import sys
 
 #host = 'distrib-1'
 host = 'localhost'
 port = 3000
-username = 'ifouros'
+username = 'manolis'
 
 my_id = 0
 context = zmq.Context()
@@ -31,17 +32,13 @@ for request in range(1):
 
 print "MY_ID is: ", my_id
 
-print ("------------------------")
-print("Sending request !j")
-socket.send(b"!j slack2" + " " + my_id)
-
-message = socket.recv()
-print("Received reply FOR J [ %s ]" %message)
-
-
-if (1==1):
-    print("Sending request !lg")
-    socket.send(b"!lg")
+while True:
+    print ("------------------------")
+    line = sys.stdin.readline()
+    user_input = line.rstrip('\n')
+    print("Sending request [ %s ]" %user_input)
+    #socket.send(user_input + " " + my_id)
+    socket.send(user_input)
 
     message = socket.recv()
-    print("Received reply FOR LG [ %s ]" %message)
+    print("Received reply [ %s ]" %message)

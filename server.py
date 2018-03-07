@@ -24,13 +24,15 @@ while True:
     elif (cmd == "lg"):
         active_groups = tracker.list_groups()
         print "ACTIVE GROUPS: ", active_groups
-        reply = "LG test reply"
+        reply = str(active_groups)
     elif (cmd == "lm"):
-        reply = "LM test reply"
+        usernames_group = tracker.list_members(args[0])
+        print "MEMBERS in GROUP: " + args[0] + "LIST: ", str(usernames_group)
+        reply = str(usernames_group)
     elif (cmd == "j"):
         members_list = tracker.join_groups(args[0], args[1])
-        print "Join groups return: ", str(members_list)
-        reply = "J (join group) test reply"
+        print "Join groups return: ", members_list
+        reply = str(members_list)
     elif (cmd == "e"):
         reply = "E test reply"
     elif (cmd == "q"):

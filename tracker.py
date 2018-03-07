@@ -13,7 +13,13 @@ def register(ip, port, username):
 def list_groups():
     return groups
 
-#def list_members(group_name):
+def list_members(group_name):
+    members_ids = groups_members[group_name]
+    members_names = []
+    for member_id in members_ids:
+        _, _, name = clients_data[member_id]
+        members_names.append(name)
+    return members_names
 
 def join_groups(group_name, id):
     # if the group doesn't exist create it & add user to group
@@ -23,13 +29,13 @@ def join_groups(group_name, id):
 
     # now the group exists, (even if it's a null group)
     # so add the user to the group
-    # & return the full list of members
     groups_members[group_name].append(id)
+
+    # and then return the full list of members
     members_data = []
     for client_id in groups_members[group_name]:
         members_data.append((client_id, ) + clients_data[client_id])
     return  members_data
-        # reu
 
 #def exit_groups(group_name):
 
