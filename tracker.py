@@ -1,5 +1,7 @@
 import uuid
 
+## ---------------------------- tracker functionality ----------------------------
+
 clients_data = {}
 groups_members = {}
 groups = []
@@ -8,9 +10,11 @@ def register(ip, port, username):
     generated_id = uuid.uuid4()
     id = str(generated_id)
     clients_data[id] = (ip, port, username)
+    print "ID: ", id
     return id
 
 def list_groups():
+    print "ACTIVE GROUPS: ", groups
     return groups
 
 def list_members(group_name):
@@ -19,6 +23,7 @@ def list_members(group_name):
     for member_id in members_ids:
         _, _, name = clients_data[member_id]
         members_names.append(name)
+    print "MEMBERS in GROUP: " + group_name + "LIST: ", str(members_names)
     return members_names
 
 def join_groups(group_name, id):
@@ -35,6 +40,8 @@ def join_groups(group_name, id):
     members_data = []
     for client_id in groups_members[group_name]:
         members_data.append((client_id, ) + clients_data[client_id])
+
+    print "JOIN GROUPS return: ", members_data
     return  members_data
 
 def exit_group(group_name, id):
@@ -72,8 +79,7 @@ def quit(id):
 
 
 
-
-
+## ---------------------------- Check validity of received message ----------------------------
 
 def proccess_message(message):
     if (message.startswith('!')):
@@ -85,10 +91,11 @@ def proccess_message(message):
         print "CMD: " + cmd
 
         ## check for errors in arguments
+        ##
+        ## all the arguments lists (apart from register cmd),
+        ## incldue one extra argument, client id.
         if (cmd == "r" and args_size != 3):
             return "Invalid arguments", []
-
-        ## the arguments list incldue one extra argument, client id.
         elif (cmd == "lg" and args_size != 1):
             return "Invalid arguments", []
         elif (cmd == "lm" and args_size != 2):
@@ -100,5 +107,41 @@ def proccess_message(message):
         elif (cmd == "q " and args_size != 1):
             return "Invalid arguments", []
 
-        ## return command with correct arguments
+        ## return command ensuring that it has correct arguments
         return cmd, command[1:]
+
+## ---------------------------- Execute command ----------------------------
+
+def execute(cmd, args):
+    print "-->EXECUTE CMD"
+
+    if (cmd == "r"):
+        id = register(args[0], args[1], args[2])
+        out = "SUCESS_" + id
+    elif (cmd == "lg"):
+        active_groups = list_groups()
+        out = str(active_groups)
+    elif (cmd == "lm"):
+        usernames_group = list_members(args[0])
+        out = str(usernames_group)
+    elif (cmd == "j"):
+        members_list = join_groups(args[0], args[1])
+        out = str(members_list)
+    elif (cmd == "e"):
+        exit = exit_group(args[0], args[1])
+        out = "SUCESS_EXIT GROUP" if exit else "FAIL_EXIT GROUP"
+    elif (cmd == "q"):
+        quit(args[0])
+        out = "SUCESS_QUIT"
+
+        ## check for errors
+    elif (cmd == "Invalid arguments"):
+        print "Invalid arguments"
+        out = "FAIL_Invalid arguments"
+    else:
+        print "Invalid command"
+        out = "FAIL_Invalid command"
+
+
+    print "-->END CMD"
+    return out

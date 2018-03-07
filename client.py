@@ -9,29 +9,27 @@ username = 'manolis'
 my_id = 0
 context = zmq.Context()
 
-#  Socket to talk to server
+# # Initialize soccents and connect to tracker
 print("Connecting to " + host + " server")
 socket = context.socket(zmq.REQ)
 socket.connect("tcp://" + host  + ":5555")
 
-for request in range(1):
-    print ("------------------------")
-    print("Sending request !r %s " % request)
-    socket.send(b"!r %s %s %s" %(host, port, username))
+## client register to thhe service
+print ("------------------------")
+print("Sending register request [ !r ]")
+socket.send(b"!r %s %s %s" %(host, port, username))
 
-    #  Get the reply.
-    message = socket.recv()
-    state, reply = message.split('_')
-    if (state == "SUCESS"):
-        my_id = reply
-        print ("Request succeeded with id: %s" %my_id)
-    elif (state == "FAIL"):
-        print ("Request failed")
-    else:
-        print("Received unknown reply %s [ %s ]" % (request, message))
+message = socket.recv()
+state, reply = message.split('_')
+if (state == "SUCESS"):
+    my_id = reply
+    print ("Request succeeded with ID: %s" %my_id)
+elif (state == "FAIL"):
+    print ("Request failed")
+else:
+    print("Received unknown reply [ %s ]" %message)
 
-print "MY_ID is: ", my_id
-
+# client give commands from stdin
 while True:
     print ("------------------------")
     line = sys.stdin.readline()
