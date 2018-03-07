@@ -53,12 +53,14 @@ def proccess_message(message):
         print "ARGS SIZE: " + str(args_size)
         print "CMD: " + cmd
 
-        ## check for errors
+        ## check for errors in arguments
         if (cmd == "r" and args_size != 3):
             return "Invalid arguments", []
-        elif (cmd == "lg" and args_size != 0):
+
+        ## the arguments list incldue one extra argument, client id.
+        elif (cmd == "lg" and args_size != 1):
             return "Invalid arguments", []
-        elif (cmd == "lm" and args_size != 1):
+        elif (cmd == "lm" and args_size != 2):
             return "Invalid arguments", []
         elif (cmd == "j" and args_size != 2):
             return "Invalid arguments", []

@@ -4,7 +4,7 @@ import sys
 #host = 'distrib-1'
 host = 'localhost'
 port = 3000
-username = 'manolis'
+username = 'ifouros'
 
 my_id = 0
 context = zmq.Context()
@@ -35,10 +35,11 @@ print "MY_ID is: ", my_id
 while True:
     print ("------------------------")
     line = sys.stdin.readline()
-    user_input = line.rstrip('\n')
+    user_input = line.rstrip("\n ")
+    user_input = ' '.join(user_input.split())
     print("Sending request [ %s ]" %user_input)
-    #socket.send(user_input + " " + my_id)
-    socket.send(user_input)
+    socket.send(user_input + " " + my_id)
+    #socket.send(user_input)
 
     message = socket.recv()
     print("Received reply [ %s ]" %message)
