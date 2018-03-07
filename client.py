@@ -1,20 +1,45 @@
 import zmq
+import sys
 
-host = 'distrib-1'
+#host = 'distrib-1'
 host = 'localhost'
+port = 3000
+username = 'manolis'
 
+my_id = 0
 context = zmq.Context()
 
-#  Socket to talk to server
-print("Connecting to 'distrib-1' server")
+# # Initialize soccents and connect to tracker
+print("Connecting to " + host + " server")
 socket = context.socket(zmq.REQ)
-#socket.connect("tcp://distrib-1:5555")
 socket.connect("tcp://" + host  + ":5555")
 
-for request in range(10):
-    print("Sending request %s " % request)
-    socket.send(b"Hey: " + str(request) )
+## client register to thhe service
+print ("------------------------")
+print("Sending register request [ !r ]")
+socket.send(b"!r %s %s %s" %(host, port, username))
 
-    #  Get the reply.
+message = socket.recv()
+if (message.startswith('*')):
+    print ("Error: ", message.lstrip('*'))
+else:
+    my_id = message
+    print ("REPLY --> ID: %s" %my_id)
+
+
+# client give commands from stdin
+while True:
+    print ("------------------------")
+    line = sys.stdin.readline()
+    user_input = line.rstrip("\n ")
+    user_input = ' '.join(user_input.split())
+    print("REQUEST: [ %s ]" %user_input)
+    socket.send(user_input + " " + my_id)
+    #socket.send(user_input)
+
     message = socket.recv()
-    print("Received reply %s [ %s ]" % (request, message))
+
+    if (message.startswith('*')):
+        print "Error: ", message.lstrip('*')
+    else:
+        print "REPLY: [ %s ]" %message

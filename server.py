@@ -6,22 +6,14 @@ context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
 
-tracker = tracker.Tracker()
-
 while True:
     #  Wait for next request from client
     message = socket.recv()
-    print("Received message: %s" % message)
+    print ("------------------------")
+    print ("-->Received message: %s" %message)
 
-    #  Do some 'work'
-    time.sleep(1)
-
-    # testing here
-    string = tracker.string()
-    print string
-
-
-
-
+    cmd, args = tracker.proccess_message(message)
+    reply = tracker.execute(cmd, args)
+    
     #  Send reply back to client
-    socket.send(b"World")
+    socket.send(reply)
