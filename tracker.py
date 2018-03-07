@@ -41,6 +41,7 @@ def exit_group(group_name, id):
     if (not groups_members.has_key(group_name)):
         return False
 
+    # try to delete the user from a pre-specified group
     try:
         groups_members[group_name].remove(id)
     except ValueError:
@@ -50,7 +51,6 @@ def exit_group(group_name, id):
     # if the group is empty delete it andn remove the corresponding group
     if (groups_members[group_name] == []):
         del groups_members[group_name]
-
         try:
             groups.remove(group_name)
         except ValueError:
@@ -62,7 +62,15 @@ def exit_group(group_name, id):
     return True
 
 
-#def quit(id):
+def quit(id):
+    # removing user from all groups
+    for group_name in groups:
+        exit_group(group_name, id)
+
+    print "QUIT_COMPLETED"
+    return True
+
+
 
 
 

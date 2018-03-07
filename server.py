@@ -37,7 +37,8 @@ while True:
         exit = tracker.exit_group(args[0], args[1])
         reply = "SUCESS_EXIT GROUP" if exit else "FAIL_EXIT GROUP"
     elif (cmd == "q"):
-        reply = "Q test reply"
+        tracker.quit(args[0])
+        reply = "SUCESS_QUIT"
 
 
         ## check for errors

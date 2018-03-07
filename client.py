@@ -4,7 +4,7 @@ import sys
 #host = 'distrib-1'
 host = 'localhost'
 port = 3000
-username = 'ifouros'
+username = 'manolis'
 
 my_id = 0
 context = zmq.Context()
