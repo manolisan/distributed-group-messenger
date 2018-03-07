@@ -130,19 +130,19 @@ def execute(cmd, args):
 
     if (cmd == "r"):
         id = register(args[0], args[1], args[2])
-        out = "SUCESS_" + id
+        out = id
     elif (cmd == "lg"):
         active_groups = list_groups()
-        out = "SUCESS_" + str(active_groups)
+        out = str(active_groups)
     elif (cmd == "lm"):
         usernames_group = list_members(args[0])
-        out = ("SUCESS_" + str(usernames_group) ) if usernames_group else "FAIL_LIST MEMBERS"
+        out = str(usernames_group) if usernames_group else "*LIST MEMBERS"
     elif (cmd == "j"):
         members_list = join_groups(args[0], args[1])
-        out = ("SUCESS_" + str(members_list) ) if members_list else "FAIL_JOIN alredy member"
+        out = str(members_list) if members_list else "*JOIN alredy member"
     elif (cmd == "e"):
         exit = exit_group(args[0], args[1])
-        out = "SUCESS_EXIT GROUP" if exit else "FAIL_EXIT GROUP"
+        out = "SUCESS_EXIT GROUP" if exit else "*EXIT GROUP"
     elif (cmd == "q"):
         quit(args[0])
         out = "SUCESS_QUIT"
@@ -150,10 +150,10 @@ def execute(cmd, args):
         ## check for errors
     elif (cmd == "Invalid arguments"):
         print "Invalid arguments"
-        out = "FAIL_Invalid arguments"
+        out = "*Invalid arguments"
     else:
         print "Invalid command"
-        out = "FAIL_Invalid command"
+        out = "*Invalid command"
 
 
     print "-->END CMD"

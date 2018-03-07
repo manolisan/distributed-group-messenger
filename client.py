@@ -20,14 +20,12 @@ print("Sending register request [ !r ]")
 socket.send(b"!r %s %s %s" %(host, port, username))
 
 message = socket.recv()
-state, reply = message.split('_')
-if (state == "SUCESS"):
-    my_id = reply
-    print ("Request succeeded with ID: %s" %my_id)
-elif (state == "FAIL"):
-    print ("Request failed")
+if (message.startswith('*')):
+    print ("Error: ", message.lstrip('*'))
 else:
-    print("Received unknown reply [ %s ]" %message)
+    my_id = message
+    print ("REPLY --> ID: %s" %my_id)
+
 
 # client give commands from stdin
 while True:
@@ -35,9 +33,13 @@ while True:
     line = sys.stdin.readline()
     user_input = line.rstrip("\n ")
     user_input = ' '.join(user_input.split())
-    print("Sending request [ %s ]" %user_input)
+    print("REQUEST: [ %s ]" %user_input)
     socket.send(user_input + " " + my_id)
     #socket.send(user_input)
 
     message = socket.recv()
-    print("Received reply [ %s ]" %message)
+
+    if (message.startswith('*')):
+        print "Error: ", message.lstrip('*')
+    else:
+        print "REPLY: [ %s ]" %message
