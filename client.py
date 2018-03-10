@@ -1,10 +1,16 @@
 import zmq
 import sys
+import socket
+import struct
 
-#host = 'distrib-1'
+
+if (len(sys.argv) != 3):
+    print "Usage: python client.py [port] [username]"
+    exit()
+
 host = 'localhost'
-port = 3000
-username = 'manolis'
+port = sys.argv[1]
+username = sys.argv[2]
 
 my_id = 0
 context = zmq.Context()
@@ -14,7 +20,7 @@ print("Connecting to " + host + " server")
 socket = context.socket(zmq.REQ)
 socket.connect("tcp://" + host  + ":5555")
 
-## client register to thhe service
+## REGISTER to thhe service
 print ("------------------------")
 print("Sending register request [ !r ]")
 socket.send(b"!r %s %s %s" %(host, port, username))
@@ -33,13 +39,17 @@ while True:
     line = raw_input("[%s]>" %username)
     user_input = line.rstrip("\n ")
     user_input = ' '.join(user_input.split())
-    print("REQUEST: [ %s ]" %user_input)
-    socket.send(user_input + " " + my_id)
-    #socket.send(user_input)
 
-    message = socket.recv()
+    # input command
+    if (user_input.startswith('!')):
+        print("REQUEST: [ %s ]" %user_input)
+        socket.send(user_input + " " + my_id)
+        message = socket.recv()
+        if (message.startswith('*')):
+            print "Error: ", message.lstrip('*')
+        else:
+            print "REPLY: [ %s ]" %message
 
-    if (message.startswith('*')):
-        print "Error: ", message.lstrip('*')
     else:
-        print "REPLY: [ %s ]" %message
+        print "TODO: Sending user input! "
+        #sender_sock.send(user_input)
