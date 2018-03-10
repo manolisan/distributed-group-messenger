@@ -31,6 +31,7 @@ def list_members(group_name):
 def join_groups(group_name, id):
     # if the group doesn't exist create it & add user to group
     if (not groups_members.has_key(group_name)):
+        print "NEW GROUP: ", group_name
         groups_members[group_name] = []
         groups.append(group_name)
 
@@ -77,8 +78,9 @@ def exit_group(group_name, id):
 
 
 def quit(id):
+    previous_groups = groups[:]
     # removing user from all groups
-    for group_name in groups:
+    for group_name in previous_groups:
         exit_group(group_name, id)
 
     print "QUIT_COMPLETED"
