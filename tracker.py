@@ -102,14 +102,14 @@ def alive(id, current_group = None):
     # modifieing items of a dictionary is not threadsafe
     with alive_lock:
         alive_clients[id] = time.clock()
-    print "ALIVE CLOCKS,",  id, alive_clients[id]
+    #print "ALIVE CLOCKS,",  id, alive_clients[id]
 
     # Clean_up for all structs from a thread of zmq
     # and not from the clean_dead asychronous function
     # so we avoid the overhead using locks everywhere
     for client_id in clients_data:
         if (not alive_clients.has_key(client_id)):
-            print "&&&&&&&&&&&&&&&Killing: ", client_id
+            print "&&&&&&&&&&&&&&&-----------------Cleaning dead client: ", client_id
             quit(client_id)
 
     ## return information about the group
@@ -118,7 +118,7 @@ def alive(id, current_group = None):
         for client_id in groups_members[current_group]:
             members_data.append((client_id, ) + clients_data[client_id])
 
-        print "ALIVE UPDATE CURRENT GROUP: ", members_data
+        #print "ALIVE UPDATE CURRENT GROUP: ", members_data
         return  members_data
     else:
         return []

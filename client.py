@@ -25,7 +25,6 @@ context = zmq.Context()
 # client give commands from stdin
 def send_input():
     global current_group
-    print ("------------------------")
     line = sys.stdin.readline()
     user_input = line.rstrip("\n ")
     user_input = ' '.join(user_input.split())
@@ -42,7 +41,7 @@ def send_input():
             print "You haven't joined group %s" %command[1], "in order to send a message"
      #check if user wants to communicate with server
     elif (user_input.startswith('!')):
-        print("REQUEST: [ %s ]" % user_input)
+        print("REQUEST: %s" % user_input)
         socket_tcp.send(user_input + " " + my_id)
         message = socket_tcp.recv()
         if (message.startswith('*')):
@@ -55,7 +54,7 @@ def send_input():
                 joined_groups.append(command[1])
                 for item in groups_members[command[1]][::-1]:
                     receive_sock.sendto('*' + str(((my_id, host, str(port), username), command[1])), (item[1], int(item[2])))
-                print "REPLY: [ %s ]" % message
+                print "REPLY: %s" % message
             # if user exits a certain group remove group from joined groups and the list of users of the group
             elif user_input.startswith('!e'):
                 command=user_input.split(' ')
@@ -64,7 +63,7 @@ def send_input():
                 groups_members[command[1]][:] = []
                 joined_groups.remove(command[1])
                 current_group=None
-                print "REPLY: [ %s ]" % message
+                print "REPLY: %s" % message
             #if user quits empty joined groups list and groups_members dictionary
             elif user_input.startswith('!q'):
                 for item1 in groups_members:
@@ -72,10 +71,10 @@ def send_input():
                         receive_sock.sendto('&' + str(((my_id, host, str(port), username), item1)), (item[1], int(item[2])))
                 groups_members.clear()
                 joined_groups[:] = []
-                print "REPLY: [ %s ]" % message
+                print "REPLY: %s" % message
                 current_group = None
             else:
-                print "REPLY: [ %s ]" % message
+                print "REPLY: %s" % message
      #check if user wants to send a message
     else:
         #if user hasn't selected a group to send a message
@@ -84,7 +83,6 @@ def send_input():
         else:
             #check if user is still a member of current group,he may have left
             if current_group in joined_groups:
-                print "TODO: Sending user input! "
                 for item in groups_members[current_group][::-1]:
                     receive_sock.sendto("in " + current_group + ' ' + username + " says:: " + user_input, (item[1], int(item[2])))
             else:
@@ -95,23 +93,23 @@ def send_input():
 
 
 def heartbeat():
+    timer_context = zmq.Context()
+    socket_timer = timer_context.socket(zmq.REQ)
     while True:
-        timer_context = zmq.Context()
-        socket_timer = timer_context.socket(zmq.REQ)
+        #print "***ALIVE!"
         socket_timer.connect("tcp://" + host  + ":5555")
         if current_group is None:
             socket_timer.send(b"!a "+my_id)
         else:
             socket_timer.send(b"!a "+my_id + ' ' + current_group)
         message = socket_timer.recv()
-        print "***ALIVE!"
 
         if message.startswith("*u"):
             message = message[2:]
             groups_members[current_group] = list(ast.literal_eval(message))
 
-        print "Group members", groups_members
-        print "***ALIVE!"
+            #print "Group members", groups_members
+            #print "***ALIVE!"
         time.sleep(5)
 
 
@@ -122,7 +120,6 @@ socket_tcp = context.socket(zmq.REQ)
 socket_tcp.connect("tcp://" + host  + ":5555")
 
 ## REGISTER to thhe service
-print ("------------------------")
 print("Sending register request [ !r ]")
 socket_tcp.send(b"!r %s %s %s" %(host, port, username))
 
