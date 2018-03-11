@@ -3,6 +3,7 @@ import sys
 import socket
 import select
 import ast
+import threading
 
 
 if (len(sys.argv) != 3):
@@ -50,7 +51,7 @@ def send_input():
         else:
             print "TODO: Sending user input! "
             for item in groups_members[current_group][::-1]:
-                receive_sock.sendto(user_input, (item[1], int(item[2])))
+                receive_sock.sendto("in " + current_group + ' ' + username + " says:: " + user_input, (item[1], int(item[2])))
 
     sys.stdout.write("[%s]>" %username); sys.stdout.flush()
 
@@ -78,6 +79,12 @@ receive_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 receive_sock.bind((host, port))
 
 sys.stdout.write("[%s]>" %username); sys.stdout.flush()
+
+def heartbeat():
+  threading.Timer(5.0, heartbeat).start()
+  print "Timer!"
+
+heartbeat()
 
 while True:
     readable, writable, exceptional = select.select([sys.stdin, receive_sock], [], [])
