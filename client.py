@@ -59,12 +59,14 @@ def send_input():
                 command=user_input.split(' ')
                 groups_members[command[1]][:] = []
                 joined_groups.remove(command[1])
+                current_group=None
                 print "REPLY: [ %s ]" % message
             #if user quits empty joined groups list and groups_members dictionary
             elif user_input.startswith('!q'):
                 groups_members.clear()
                 joined_groups[:] = []
                 print "REPLY: [ %s ]" % message
+                current_group = None
             else:
                 print "REPLY: [ %s ]" % message
      #check if user wants to send a message
