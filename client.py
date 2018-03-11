@@ -11,6 +11,7 @@ if (len(sys.argv) != 3):
     print "Usage: python client.py [port] [username]"
     exit()
 
+joined_groups = []
 groups_members = {}
 current_group = None
 host = "localhost"
@@ -30,9 +31,16 @@ def send_input():
     user_input = ' '.join(user_input.split())
 
     # input command
+    #check if user wants to choose a group
     if user_input.startswith('!w'):
         command = user_input.split(' ')
-        current_group = command[1]
+        #check if user has joined the certain group
+        if command[1] in joined_groups:
+            current_group = command[1]
+            print "Write a message in group  %s" %command[1]
+        else:
+            print "You haven't joined group %s" %command[1], "in order to send a message"
+     #check if user wants to communicate with server
     elif (user_input.startswith('!')):
         print("REQUEST: [ %s ]" % user_input)
         socket_tcp.send(user_input + " " + my_id)
@@ -40,20 +48,39 @@ def send_input():
         if (message.startswith('*')):
             print "Error: ", message.lstrip('*')
         else:
+            #after communication with server user stores the members of the group and the group name
             if user_input.startswith('!j'):
                 command = user_input.split(' ')
                 groups_members[command[1]] = list(ast.literal_eval(message))
+                joined_groups.append(command[1])
+                print "REPLY: [ %s ]" % message
+            # if user exits a certain group remove group from joined groups and the list of users of the group
+            elif user_input.startswith('!e'):
+                command=user_input.split(' ')
+                groups_members[command[1]][:] = []
+                joined_groups.remove(command[1])
+                print "REPLY: [ %s ]" % message
+            #if user quits empty joined groups list and groups_members dictionary
+            elif user_input.startswith('!q'):
+                groups_members.clear()
+                joined_groups[:] = []
                 print "REPLY: [ %s ]" % message
             else:
                 print "REPLY: [ %s ]" % message
+     #check if user wants to send a message
     else:
+        #if user hasn't selected a group to send a message
         if (current_group is None):
-            print "Please join or create a group in order to sent a message!!!"
+            print "Please selece a group in order to sent a message!!!"
         else:
-            print "TODO: Sending user input! "
-            for item in groups_members[current_group][::-1]:
-                receive_sock.sendto("in " + current_group + ' ' + username + " says:: " + user_input, (item[1], int(item[2])))
-
+            #check if user is still a member of current group,he may have left
+            if current_group in joined_groups:
+                print "TODO: Sending user input! "
+                for item in groups_members[current_group][::-1]:
+                    receive_sock.sendto("in " + current_group + ' ' + username + " says:: " + user_input, (item[1], int(item[2])))
+            else:
+                current_group=None
+                print "Please selece a group in order to sent a message!!!"
     sys.stdout.write("[%s]>" %username); sys.stdout.flush()
 
 

@@ -161,7 +161,7 @@ def execute(cmd, args):
         out = str(members_list) if members_list else "*JOIN alredy member"
     elif (cmd == "e"):
         exit = exit_group(args[0], args[1])
-        out = "SUCESS_EXIT GROUP" if exit else "*EXIT GROUP"
+        out = "SUCESS_EXIT GROUP" if exit else "*Group not found or user not a member of group!"
     elif (cmd == "q"):
         quit(args[0])
         out = "SUCESS_QUIT"
