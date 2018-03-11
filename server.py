@@ -7,9 +7,9 @@ context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
 
-def clean_dead():
+def check_dead():
     while True:
-        print "***********************************Clean DEAD"
+        print "***********************************Check DEAD"
         dead_clients = []
         for client_id in tracker.alive_clients:
             count_time = time.clock()
@@ -25,13 +25,13 @@ def clean_dead():
                 for client_id in dead_clients:
                     del tracker.alive_clients[client_id]
 
-        print "**********************************Clean DEAD,", dead_clients
+        print "**********************************Check DEAD,", dead_clients
         time.sleep(20)
 
-## make clean_dead thread
-clean_thread = threading.Thread(target = clean_dead)
-clean_thread.daemon = True
-clean_thread.start()
+## make check_dead thread
+dead_thread = threading.Thread(target = check_dead)
+dead_thread.daemon = True
+dead_thread.start()
 
 while True:
     #  Wait for next request from client

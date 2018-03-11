@@ -92,8 +92,19 @@ def heartbeat():
         timer_context = zmq.Context()
         socket_timer = timer_context.socket(zmq.REQ)
         socket_timer.connect("tcp://" + host  + ":5555")
-        socket_timer.send(b"!a "+my_id)
-        print "ALIVE!"
+        if current_group is None:
+            socket_timer.send(b"!a "+my_id)
+        else:
+            socket_timer.send(b"!a "+my_id + ' ' + current_group)
+        message = socket_timer.recv()
+        print "***ALIVE!"
+
+        if message.startswith("*u"):
+            message = message[2:]
+            groups_members[current_group] = list(ast.literal_eval(message))
+
+        print "Group members", groups_members
+        print "***ALIVE!"
         time.sleep(5)
 
 
@@ -146,4 +157,3 @@ while True:
         else:
             #users writes message
             send_input()
-            #sys.stdout.wr
