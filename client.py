@@ -5,7 +5,7 @@ import select
 import ast
 import threading
 import time
-
+from operator import itemgetter
 
 if (len(sys.argv) != 3):
     print "Usage: python client.py [port] [username]"
@@ -20,6 +20,61 @@ username = sys.argv[2]
 
 my_id = 0
 context = zmq.Context()
+
+priority = 0 # sequence number of sending packet
+message_queue = [] # queue for receiving packets
+groups_priorities = {} # priorities client holds for other clients
+
+
+
+def multicast(user_input):
+    global priority
+
+    for item in groups_members[current_group][::-1]:
+        priority = priority + 1
+        receive_sock.sendto(str(priority) + "^ in " + current_group + '^' + username + "^says:: " + user_input, (item[1], int(item[2])))
+    return
+
+
+def fifo_ordering(arrived_sequence, username, msg):
+    global current_group
+    global groups_priorities
+    global message_queue
+
+    index = 0
+    if current_group == None:
+        return
+    else:
+        for member in groups_priorities[current_group][::-1]:
+
+            if member[3] == username:
+                if member[4] == arrived_sequence - 1:
+                    lst = list(member)
+                    lst[4] = lst[4] + 1
+                    updated = tuple(lst)
+                    groups_priorities[current_group][index] = updated
+                    sys.stdout.write(msg)
+
+                    message_queue = sorted(message_queue, key=itemgetter(1))
+
+                    # to_remove = []
+                    # for i in message_queue:
+                        # if(groups_priorities[current_group][index][4] == i[1] + 1):
+                            # sys.stdout.write(i[0])
+                            # to_remove.append(i)
+
+                    # for i in to_remove:
+                        # message_queue.remove(i)
+                elif arrived_sequence > member[4] + 1:
+                    message_queue.append((msg, arrived_sequence))
+
+                else:
+                    sys.stdout.write("Packet is thrown with smaller sequence than expected")
+
+                break
+
+            index = index + 1
+
 
 
 # client give commands from stdin
@@ -51,6 +106,7 @@ def send_input():
             if user_input.startswith('!j'):
                 command = user_input.split(' ')
                 groups_members[command[1]] = list(ast.literal_eval(message))
+                groups_priorities[command[1]] = list(map((lambda x: x + (0,)), groups_members[command[1]]))
                 joined_groups.append(command[1])
                 for item in groups_members[command[1]][::-1]:
                     receive_sock.sendto('*' + str(((my_id, host, str(port), username), command[1])), (item[1], int(item[2])))
@@ -61,6 +117,7 @@ def send_input():
                 for item in groups_members[command[1]][::-1]:
                     receive_sock.sendto('&' + str(((my_id, host, str(port), username), command[1])), (item[1], int(item[2])))
                 groups_members[command[1]][:] = []
+                groups_priorities[command[1]][:] = []
                 joined_groups.remove(command[1])
                 current_group=None
                 print "REPLY: %s" % message
@@ -83,8 +140,10 @@ def send_input():
         else:
             #check if user is still a member of current group,he may have left
             if current_group in joined_groups:
-                for item in groups_members[current_group][::-1]:
-                    receive_sock.sendto("in " + current_group + ' ' + username + " says:: " + user_input, (item[1], int(item[2])))
+                multicast(user_input)
+            #     for item in groups_members[current_group][::-1]:
+            #         receive_sock.sendto("in " + current_group + ' ' + username + " says:: " + user_input, (item[1], int(item[2])))
+
             else:
                 current_group=None
                 print "Please selece a group in order to sent a message!!!"
@@ -160,7 +219,7 @@ while True:
                     if groups_members.has_key(data[1]):
                         if not (data[0] in groups_members[data[1]]):
                             groups_members[data[1]].append(data[0])
-                            print groups_members[data[1]]
+                            # print groups_members[data[1]]
                 elif data.startswith('&'):
                     data = data[1::]
                     data = eval(data)
@@ -168,11 +227,21 @@ while True:
                     if groups_members.has_key(data[1]):
                         if data[0] in groups_members[data[1]]:
                             groups_members[data[1]].remove(data[0])
-                            print groups_members[data[1]]
+                            # print groups_members[data[1]]
 
                 else:
                     sys.stdout.write('\n')
-                    sys.stdout.write(data)
+
+                    seq, msg1, username, msg3 = data.split('^')
+                    msg = msg1 + ' ' + username + ' ' + msg3
+
+                    sequence = int(seq)
+                    sys.stdout.write("=============")
+                    sys.stdout.write("msg" + msg)
+                    sys.stdout.write("=============\n")
+
+                    fifo_ordering(sequence, username, msg)
+
                     sys.stdout.write('\n')
                     sys.stdout.write("[%s]>" %username); sys.stdout.flush()
 
