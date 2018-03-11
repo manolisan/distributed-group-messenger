@@ -13,8 +13,8 @@ def clean_dead():
         dead_clients = []
         with tracker.alive_lock:
             for client_id in tracker.alive_clients:
-                print tracker.alive_clients[client_id], time.clock()
-                if  (tracker.alive_clients[client_id] < time.clock() - 0.05):
+                print tracker.alive_clients[client_id], time.clock() -0.001
+                if  (tracker.alive_clients[client_id] < time.clock() - 0.001):
                     dead_clients.append(client_id)
 
             for client_id in dead_clients:
