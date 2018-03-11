@@ -53,16 +53,23 @@ def send_input():
                 command = user_input.split(' ')
                 groups_members[command[1]] = list(ast.literal_eval(message))
                 joined_groups.append(command[1])
+                for item in groups_members[command[1]][::-1]:
+                    receive_sock.sendto('*' + str(((my_id, host, str(port), username), command[1])), (item[1], int(item[2])))
                 print "REPLY: [ %s ]" % message
             # if user exits a certain group remove group from joined groups and the list of users of the group
             elif user_input.startswith('!e'):
                 command=user_input.split(' ')
+                for item in groups_members[command[1]][::-1]:
+                    receive_sock.sendto('&' + str(((my_id, host, str(port), username), command[1])), (item[1], int(item[2])))
                 groups_members[command[1]][:] = []
                 joined_groups.remove(command[1])
                 current_group=None
                 print "REPLY: [ %s ]" % message
             #if user quits empty joined groups list and groups_members dictionary
             elif user_input.startswith('!q'):
+                for item1 in groups_members:
+                    for item in groups_members[item1][::-1]:
+                        receive_sock.sendto('&' + str(((my_id, host, str(port), username), item1)), (item[1], int(item[2])))
                 groups_members.clear()
                 joined_groups[:] = []
                 print "REPLY: [ %s ]" % message
@@ -149,10 +156,28 @@ while True:
                 print "Error receiving data"
                 sys.exit()
             else:
-                sys.stdout.write('\n')
-                sys.stdout.write(data)
-                sys.stdout.write('\n')
-                sys.stdout.write("[%s]>" %username); sys.stdout.flush()
+                if data.startswith('*'):
+                    data = data[1::]
+                    data = eval(data)
+
+                    if groups_members.has_key(data[1]):
+                        if not (data[0] in groups_members[data[1]]):
+                            groups_members[data[1]].append(data[0])
+                            print groups_members[data[1]]
+                elif data.startswith('&'):
+                    data = data[1::]
+                    data = eval(data)
+
+                    if groups_members.has_key(data[1]):
+                        if data[0] in groups_members[data[1]]:
+                            groups_members[data[1]].remove(data[0])
+                            print groups_members[data[1]]
+
+                else:
+                    sys.stdout.write('\n')
+                    sys.stdout.write(data)
+                    sys.stdout.write('\n')
+                    sys.stdout.write("[%s]>" %username); sys.stdout.flush()
 
         else:
             #users writes message
