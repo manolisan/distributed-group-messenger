@@ -19,8 +19,8 @@ def register(ip, port, username):
     id = str(generated_id)
     clients_data[id] = (ip, port, username)
 
-    with alive_lock:
-        alive_clients[id] = time.clock()
+    # adding an item to a dictionnary is thread safe
+    alive_clients[id] = time.clock()
 
     print "ID: ", id
     return id
@@ -99,9 +99,19 @@ def quit(id):
     return True
 
 def alive(id):
+    # modifieing items of a dictionary is not threadsafe
     with alive_lock:
         alive_clients[id] = time.clock()
     print "ALIVE CLOCKS,",  id, alive_clients[id]
+
+    # Clean_up for all structs from a thread of zmq
+    # and not from the clean_dead asychronous function
+    # so we avoid the overhead using locks everywhere
+
+    for client_id in clients_data:
+        if (not alive_clients.has_key(client_id)):
+            print "&&&&&&&&&&&&&&&Killing: ", client_id
+            quit(client_id)
 
 
 ## ---------------------------- Check validity of received message ----------------------------
