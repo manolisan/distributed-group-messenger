@@ -5,8 +5,23 @@ import select
 import ast
 
 
+if (len(sys.argv) != 3):
+    print "Usage: python client.py [port] [username]"
+    exit()
+
+groups_members = {}
+current_group = None
+host = "localhost"
+port = int(sys.argv[1])
+username = sys.argv[2]
+
+my_id = 0
+context = zmq.Context()
+
+
 # client give commands from stdin
-def send_input(current_group):
+def send_input():
+    global current_group
     print ("------------------------")
     line = sys.stdin.readline()
     user_input = line.rstrip("\n ")
@@ -15,7 +30,7 @@ def send_input(current_group):
     # input command
     if user_input.startswith('!w'):
         command = user_input.split(' ')
-        current_group=command[1]
+        current_group = command[1]
     elif (user_input.startswith('!')):
         print("REQUEST: [ %s ]" % user_input)
         socket_tcp.send(user_input + " " + my_id)
@@ -38,20 +53,8 @@ def send_input(current_group):
                 receive_sock.sendto(user_input, (item[1], int(item[2])))
 
     sys.stdout.write("[%s]>" %username); sys.stdout.flush()
-    return current_group
 
-if (len(sys.argv) != 3):
-    print "Usage: python client.py [port] [username]"
-    exit()
 
-groups_members = {}
-current_group = None
-host = "localhost"
-port = int(sys.argv[1])
-username = sys.argv[2]
-
-my_id = 0
-context = zmq.Context()
 
 # # Initialize soccents and connect to tracker
 print("Connecting to " + host + " server")
@@ -93,5 +96,5 @@ while True:
 
         else:
             #users writes message
-            current_group=send_input(current_group)
+            send_input()
             #sys.stdout.wr
