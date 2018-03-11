@@ -6,14 +6,17 @@ import ast
 
 
 # client give commands from stdin
-def send_input():
+def send_input(current_group):
     print ("------------------------")
     line = sys.stdin.readline()
     user_input = line.rstrip("\n ")
     user_input = ' '.join(user_input.split())
 
     # input command
-    if (user_input.startswith('!')):
+    if user_input.startswith('!w'):
+        command = user_input.split(' ')
+        current_group=command[1]
+    elif (user_input.startswith('!')):
         print("REQUEST: [ %s ]" % user_input)
         socket_tcp.send(user_input + " " + my_id)
         message = socket_tcp.recv()
@@ -27,19 +30,22 @@ def send_input():
             else:
                 print "REPLY: [ %s ]" % message
     else:
-        print "TODO: Sending user input! "
-        for item in groups_members[group][::-1]:
-            receive_sock.sendto(user_input, (item[1], int(item[2])))
+        if (current_group is None):
+            print "Please join or create a group in order to sent a message!!!"
+        else:
+            print "TODO: Sending user input! "
+            for item in groups_members[current_group][::-1]:
+                receive_sock.sendto(user_input, (item[1], int(item[2])))
 
     sys.stdout.write("[%s]>" %username); sys.stdout.flush()
-
+    return current_group
 
 if (len(sys.argv) != 3):
     print "Usage: python client.py [port] [username]"
     exit()
 
 groups_members = {}
-group='redtube'
+current_group = None
 host = "localhost"
 port = int(sys.argv[1])
 username = sys.argv[2]
@@ -87,5 +93,5 @@ while True:
 
         else:
             #users writes message
-            send_input()
+            current_group=send_input(current_group)
             #sys.stdout.wr
