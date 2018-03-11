@@ -1,8 +1,16 @@
 import uuid
-
+import time
+import threading
 ## ---------------------------- tracker functionality ----------------------------
 
+## simple current time in milisecond function
+#current_milli_time = lambda: int(round(time.time() * 1000))
+
+alive_lock = threading.Lock()
+alive_clients = {}
 clients_data = {}
+
+
 groups_members = {}
 groups = []
 
@@ -10,6 +18,7 @@ def register(ip, port, username):
     generated_id = uuid.uuid4()
     id = str(generated_id)
     clients_data[id] = (ip, port, username)
+    alive_clients[id] = time.clock()
     print "ID: ", id
     return id
 
@@ -86,6 +95,10 @@ def quit(id):
     print "QUIT_COMPLETED"
     return True
 
+def alive(id):
+    with alive_lock:
+        alive_clients[id] = time.clock()
+    print "ALIVE CLOCKS,",  id, alive_clients[id]
 
 
 ## ---------------------------- Check validity of received message ----------------------------
@@ -116,10 +129,11 @@ def proccess_message(message):
             return "Invalid arguments", []
         elif (cmd == "q " and args_size != 1):
             return "Invalid arguments", []
+        elif (cmd == "a" and args_size !=1 ):
+            return "Invalid arguments", []
 
         ## return command ensuring that it has correct arguments
         return cmd, command[1:]
-
     else:
         # message is NOT a command
         # return just null list for now
@@ -148,6 +162,9 @@ def execute(cmd, args):
     elif (cmd == "q"):
         quit(args[0])
         out = "SUCESS_QUIT"
+    elif (cmd == "a"):
+        state = alive(args[0])
+        out = "ALIVE"
 
         ## check for errors
     elif (cmd == "Invalid arguments"):

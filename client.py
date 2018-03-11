@@ -4,6 +4,7 @@ import socket
 import select
 import ast
 import threading
+import time
 
 
 if (len(sys.argv) != 3):
@@ -57,6 +58,17 @@ def send_input():
 
 
 
+def heartbeat():
+    while True:
+        timer_context = zmq.Context()
+        socket_timer = timer_context.socket(zmq.REQ)
+        socket_timer.connect("tcp://" + host  + ":5555")
+        socket_timer.send(b"!a "+my_id)
+        print "ALIVE!"
+        time.sleep(5)
+
+
+
 # # Initialize soccents and connect to tracker
 print("Connecting to " + host + " server")
 socket_tcp = context.socket(zmq.REQ)
@@ -80,11 +92,12 @@ receive_sock.bind((host, port))
 
 sys.stdout.write("[%s]>" %username); sys.stdout.flush()
 
-def heartbeat():
-  threading.Timer(5.0, heartbeat).start()
-  print "Timer!"
 
-heartbeat()
+## make heartbeat thread
+heartbeat_thread = threading.Thread(target = heartbeat)
+heartbeat_thread.daemon = True
+heartbeat_thread.start()
+
 
 while True:
     readable, writable, exceptional = select.select([sys.stdin, receive_sock], [], [])
