@@ -2,6 +2,8 @@ import zmq
 import sys
 import socket
 import select
+import ast
+
 
 # client give commands from stdin
 def send_input():
@@ -12,17 +14,22 @@ def send_input():
 
     # input command
     if (user_input.startswith('!')):
-        print("REQUEST: [ %s ]" %user_input)
+        print("REQUEST: [ %s ]" % user_input)
         socket_tcp.send(user_input + " " + my_id)
         message = socket_tcp.recv()
         if (message.startswith('*')):
             print "Error: ", message.lstrip('*')
         else:
-            print "REPLY: [ %s ]" %message
-
+            if user_input.startswith('!j'):
+                command = user_input.split(' ')
+                groups_members[command[1]] = list(ast.literal_eval(message))
+                print "REPLY: [ %s ]" % message
+            else:
+                print "REPLY: [ %s ]" % message
     else:
         print "TODO: Sending user input! "
-        #sender_sock.send(user_input)
+        for item in groups_members[group][::-1]:
+            receive_sock.sendto(user_input, (item[1], int(item[2])))
 
     sys.stdout.write("[%s]>" %username); sys.stdout.flush()
 
@@ -31,6 +38,8 @@ if (len(sys.argv) != 3):
     print "Usage: python client.py [port] [username]"
     exit()
 
+groups_members = {}
+group='redtube'
 host = "localhost"
 port = int(sys.argv[1])
 username = sys.argv[2]
