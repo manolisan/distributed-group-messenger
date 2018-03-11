@@ -18,7 +18,10 @@ def register(ip, port, username):
     generated_id = uuid.uuid4()
     id = str(generated_id)
     clients_data[id] = (ip, port, username)
-    alive_clients[id] = time.clock()
+
+    with alive_lock:
+        alive_clients[id] = time.clock()
+
     print "ID: ", id
     return id
 
