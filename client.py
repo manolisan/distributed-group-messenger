@@ -5,205 +5,184 @@ import select
 import ast
 import threading
 import time
-from operator import itemgetter
 
-if (len(sys.argv) != 3):
-    print "Usage: python client.py [port] [username]"
+#
+if (len(sys.argv) != 4 and len(sys.argv) != 3):
+    print "Usage: python client.py [port] [username] or client.py [port] [username] [textfile]"
     exit()
 
+#list of joined groups
 joined_groups = []
+#list for every group the clients is in for multicast sending
 groups_members = {}
+#for fifo
+sequence_vector = {}
+#variavle for the group the client has chosen to write with !w
 current_group = None
+
+#initializations
 host = "localhost"
 port = int(sys.argv[1])
 username = sys.argv[2]
-
 my_id = 0
 context = zmq.Context()
 
-priority = 0 # sequence number of sending packet
-message_queue = [] # queue for receiving packets
-groups_priorities = {} # priorities client holds for other clients
-
-
-
-def multicast(user_input):
-    global priority
-
-    for item in groups_members[current_group][::-1]:
-        priority = priority + 1
-        receive_sock.sendto(str(priority) + "^ in " + current_group + '^' + username + "^says:: " + user_input, (item[1], int(item[2])))
-    return
-
-
-def fifo_ordering(arrived_sequence, username, msg):
-    global current_group
-    global groups_priorities
-    global message_queue
-
-    index = 0
-    if current_group == None:
-        return
-    else:
-        for member in groups_priorities[current_group][::-1]:
-
-            if member[3] == username:
-                if member[4] == arrived_sequence - 1:
-                    lst = list(member)
-                    lst[4] = lst[4] + 1
-                    updated = tuple(lst)
-                    groups_priorities[current_group][index] = updated
-                    sys.stdout.write(msg)
-
-                    message_queue = sorted(message_queue, key=itemgetter(1))
-
-                    # to_remove = []
-                    # for i in message_queue:
-                        # if(groups_priorities[current_group][index][4] == i[1] + 1):
-                            # sys.stdout.write(i[0])
-                            # to_remove.append(i)
-
-                    # for i in to_remove:
-                        # message_queue.remove(i)
-                elif arrived_sequence > member[4] + 1:
-                    message_queue.append((msg, arrived_sequence))
-
-                else:
-                    sys.stdout.write("Packet is thrown with smaller sequence than expected")
-
-                break
-
-            index = index + 1
-
-
 
 # client give commands from stdin
-def send_input():
+def send_input(line):
     global current_group
-    line = sys.stdin.readline()
+    #print ("------------------------")
     user_input = line.rstrip("\n ")
     user_input = ' '.join(user_input.split())
 
-    # input command
-    #check if user wants to choose a group
+    # check if user wants to choose a group
     if user_input.startswith('!w'):
         command = user_input.split(' ')
-        #check if user has joined the certain group
-        if command[1] in joined_groups:
-            current_group = command[1]
-            print "Write a message in group  %s" %command[1]
+        args_size = len(command) - 1
+        if args_size==1:
+            # check if user has joined the certain group
+            if command[1] in joined_groups:
+                current_group = command[1]
+                print "Write a message in group  %s" % command[1]
+            else:
+                print "You haven't joined group %s" % command[1], "in order to send a message"
         else:
-            print "You haven't joined group %s" %command[1], "in order to send a message"
-     #check if user wants to communicate with server
+            print "Invalid arguments"
+
+    # check if user wants to communicate with server
     elif (user_input.startswith('!')):
-        print("REQUEST: %s" % user_input)
         socket_tcp.send(user_input + " " + my_id)
         message = socket_tcp.recv()
         if (message.startswith('*')):
             print "Error: ", message.lstrip('*')
         else:
-            #after communication with server user stores the members of the group and the group name
+            # after communication with server user stores the members of the group and the group name
             if user_input.startswith('!j'):
                 command = user_input.split(' ')
                 groups_members[command[1]] = list(ast.literal_eval(message))
-                groups_priorities[command[1]] = list(map((lambda x: x + (0,)), groups_members[command[1]]))
                 joined_groups.append(command[1])
+                sequence_vector[command[1]] = {}
                 for item in groups_members[command[1]][::-1]:
-                    receive_sock.sendto('*' + str(((my_id, host, str(port), username), command[1])), (item[1], int(item[2])))
-                print "REPLY: %s" % message
+                    # initialize counter of all clients of group for fifo
+                    sequence_vector[command[1]][item[3]] = 0
+                    #let the clients of group know that you joined
+                    if int(item[2]) != port:
+                        receive_sock.sendto('*' + str(((my_id, host, str(port), username), command[1])),
+                                            (item[1], int(item[2])))
+                print "You succesfully joined group %s" %command[1]
+
             # if user exits a certain group remove group from joined groups and the list of users of the group
             elif user_input.startswith('!e'):
-                command=user_input.split(' ')
+                command = user_input.split(' ')
                 for item in groups_members[command[1]][::-1]:
-                    receive_sock.sendto('&' + str(((my_id, host, str(port), username), command[1])), (item[1], int(item[2])))
+                    # let the clients of group know that you exited
+                    if int(item[2]) != port:
+                        receive_sock.sendto('&' + str(((my_id, host, str(port), username), command[1])),
+                                        (item[1], int(item[2])))
                 groups_members[command[1]][:] = []
-                groups_priorities[command[1]][:] = []
                 joined_groups.remove(command[1])
-                current_group=None
-                print "REPLY: %s" % message
-            #if user quits empty joined groups list and groups_members dictionary
+                current_group = None
+                print "REPLY: [ %s ]" % message
+            # if user quits empty joined groups list and groups_members dictionary
             elif user_input.startswith('!q'):
                 for item1 in groups_members:
                     for item in groups_members[item1][::-1]:
-                        receive_sock.sendto('&' + str(((my_id, host, str(port), username), item1)), (item[1], int(item[2])))
+                        # let the clients of all groups know that you exited
+                        if int(item[2]) != port:
+                            receive_sock.sendto('&' + str(((my_id, host, str(port), username), item1)),
+                                                (item[1], int(item[2])))
                 groups_members.clear()
                 joined_groups[:] = []
-                print "REPLY: %s" % message
+                print "REPLY: [ %s ]" % message
                 current_group = None
+                sys.exit()
             else:
-                print "REPLY: %s" % message
-     #check if user wants to send a message
+                print "REPLY: [ %s ]" % message
+    # check if user wants to send a message
     else:
-        #if user hasn't selected a group to send a message
+        # if user hasn't selected a group to send a message
         if (current_group is None):
             print "Please selece a group in order to sent a message!!!"
         else:
-            #check if user is still a member of current group,he may have left
+            # check if user is still a member of current group,he may have left
             if current_group in joined_groups:
-                multicast(user_input)
-            #     for item in groups_members[current_group][::-1]:
-            #         receive_sock.sendto("in " + current_group + ' ' + username + " says:: " + user_input, (item[1], int(item[2])))
-
+                #for every multicats in a group increase counter
+                sequence_vector[current_group][username] += 1
+                for item in groups_members[current_group][::-1]:
+                    receive_sock.sendto( (str(sequence_vector[current_group][username]) + "&&" + "in " + current_group + ' ' + username + " says:: " + user_input),
+                                        (item[1], int(item[2])))
             else:
-                current_group=None
+                current_group = None
                 print "Please selece a group in order to sent a message!!!"
-    sys.stdout.write("[%s]>" %username); sys.stdout.flush()
-
+    sys.stdout.write("[%s]>" % username);
+    sys.stdout.flush()
 
 
 def heartbeat():
-    timer_context = zmq.Context()
-    socket_timer = timer_context.socket(zmq.REQ)
     while True:
-        #print "***ALIVE!"
-        socket_timer.connect("tcp://" + host  + ":5555")
+        timer_context = zmq.Context()
+        socket_timer = timer_context.socket(zmq.REQ)
+        socket_timer.connect("tcp://" + host + ":5555")
         if current_group is None:
-            socket_timer.send(b"!a "+my_id)
+            socket_timer.send(b"!a " + my_id)
         else:
-            socket_timer.send(b"!a "+my_id + ' ' + current_group)
+            socket_timer.send(b"!a " + my_id + ' ' + current_group)
         message = socket_timer.recv()
+        #print "***ALIVE!"
 
         if message.startswith("*u"):
             message = message[2:]
             groups_members[current_group] = list(ast.literal_eval(message))
 
-            #print "Group members", groups_members
-            #print "***ALIVE!"
+        #print "Group members", groups_members
+        #print "***ALIVE!"
         time.sleep(5)
-
 
 
 # # Initialize soccents and connect to tracker
 print("Connecting to " + host + " server")
 socket_tcp = context.socket(zmq.REQ)
-socket_tcp.connect("tcp://" + host  + ":5555")
+socket_tcp.connect("tcp://" + host + ":5555")
 
 ## REGISTER to thhe service
+print ("------------------------")
 print("Sending register request [ !r ]")
-socket_tcp.send(b"!r %s %s %s" %(host, port, username))
+socket_tcp.send(b"!r %s %s %s" % (host, port, username))
 
 message = socket_tcp.recv()
 if (message.startswith('*')):
     print ("Error: ", message.lstrip('*'))
 else:
     my_id = message
-    print ("REPLY --> ID: %s" %my_id)
+    print ("REPLY --> ID: %s" % my_id)
 
 ## udp sockets.
 receive_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 receive_sock.bind((host, port))
 
-sys.stdout.write("[%s]>" %username); sys.stdout.flush()
-
+sys.stdout.write("[%s]>" % username);
+sys.stdout.flush()
 
 ## make heartbeat thread
-heartbeat_thread = threading.Thread(target = heartbeat)
+heartbeat_thread = threading.Thread(target=heartbeat)
 heartbeat_thread.daemon = True
 heartbeat_thread.start()
 
+#open file if it is given and join a group
+if len(sys.argv) == 4:
+    textfile = sys.argv[3]
+    fds = open(textfile, "r")
+    send_input("!j slack")
+    send_input("!w slack")
+    inputs = [sys.stdin, receive_sock, fds]
+else:
+    inputs = [sys.stdin, receive_sock]
+    fds = None
+outputs = []
 
 while True:
-    readable, writable, exceptional = select.select([sys.stdin, receive_sock], [], [])
+    time.sleep(0.5)
+    readable, writable, exceptional = select.select(inputs, outputs, [])
     for s in readable:
         if receive_sock == s:
             # incoming message from peer
@@ -215,36 +194,55 @@ while True:
                 if data.startswith('*'):
                     data = data[1::]
                     data = eval(data)
-
+                    #for refreshing group members dictionary
                     if groups_members.has_key(data[1]):
                         if not (data[0] in groups_members[data[1]]):
                             groups_members[data[1]].append(data[0])
-                            # print groups_members[data[1]]
+                    #adding counters for new clients of a group
+                    if sequence_vector.has_key(data[1]):
+                        if not (sequence_vector[data[1]].has_key(data[0][3])):
+                            sequence_vector[data[1]][data[0][3]] = 0
+
                 elif data.startswith('&'):
                     data = data[1::]
                     data = eval(data)
-
+                    #for refreshing group members dicrionary
                     if groups_members.has_key(data[1]):
                         if data[0] in groups_members[data[1]]:
                             groups_members[data[1]].remove(data[0])
-                            # print groups_members[data[1]]
-
+                    if sequence_vector.has_key(data[1]):
+                        if sequence_vector[data[1]].has_key(data[0][3]):
+                            del sequence_vector[data[1]][data[0][3]]
+                #fifooooooo
                 else:
-                    sys.stdout.write('\n')
+                    data = data.split('&&')
+                    check_counter = int(data[0])
+                    check_username = (data[1].split(' '))[2]
+                    check_group = (data[1].split(' '))[1]
+                    check_counter2 = sequence_vector[check_group][check_username]
+                    if check_counter >= check_counter2:
+                        sequence_vector[check_group][check_username] = check_counter
+                        sys.stdout.write('\n')
+                        sys.stdout.write(data[1])
+                        sys.stdout.write('\n')
+                        sys.stdout.write("[%s]>" % username);
+                        sys.stdout.flush()
+                    else:
+                        sequence_vector[check_group][check_username] = check_counter
 
-                    seq, msg1, username, msg3 = data.split('^')
-                    msg = msg1 + ' ' + username + ' ' + msg3
-
-                    sequence = int(seq)
-                    sys.stdout.write("=============")
-                    sys.stdout.write("msg" + msg)
-                    sys.stdout.write("=============\n")
-
-                    fifo_ordering(sequence, username, msg)
-
-                    sys.stdout.write('\n')
-                    sys.stdout.write("[%s]>" %username); sys.stdout.flush()
-
+        elif fds == s:
+            for line in fds:
+                if line.startswith("10"):
+                    line = line[4::]
+                    fds.close()
+                    inputs.remove(fds)
+                else:
+                    line = line[3::]
+                line = line.replace('\r', '')
+                send_input(line)
+                break
         else:
-            #users writes message
-            send_input()
+            #print "Send input from stdin"
+            # users writes message
+            line = sys.stdin.readline()
+            send_input(line)

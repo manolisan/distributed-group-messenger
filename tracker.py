@@ -102,14 +102,14 @@ def alive(id, current_group = None):
     # modifieing items of a dictionary is not threadsafe
     with alive_lock:
         alive_clients[id] = time.clock()
-    #print "ALIVE CLOCKS,",  id, alive_clients[id]
+    print "ALIVE CLOCKS,",  id, alive_clients[id]
 
     # Clean_up for all structs from a thread of zmq
     # and not from the clean_dead asychronous function
     # so we avoid the overhead using locks everywhere
     for client_id in clients_data:
         if (not alive_clients.has_key(client_id)):
-            print "&&&&&&&&&&&&&&&-----------------Cleaning dead client: ", client_id
+            print "&&&&&&&&&&&&&&&Killing: ", client_id
             quit(client_id)
 
     ## return information about the group
@@ -118,7 +118,7 @@ def alive(id, current_group = None):
         for client_id in groups_members[current_group]:
             members_data.append((client_id, ) + clients_data[client_id])
 
-        #print "ALIVE UPDATE CURRENT GROUP: ", members_data
+        print "ALIVE UPDATE CURRENT GROUP: ", members_data
         return  members_data
     else:
         return []
@@ -175,10 +175,10 @@ def execute(cmd, args):
         out = str(active_groups)
     elif (cmd == "lm"):
         usernames_group = list_members(args[0])
-        out = str(usernames_group) if usernames_group else "*LIST MEMBERS"
+        out = str(usernames_group) if usernames_group else "No such group"
     elif (cmd == "j"):
         members_list = join_groups(args[0], args[1])
-        out = str(members_list) if members_list else "*JOIN alredy member"
+        out = str(members_list) if members_list else "*Already a member of that group"
     elif (cmd == "e"):
         exit = exit_group(args[0], args[1])
         out = "SUCESS_EXIT GROUP" if exit else "*Group not found or user not a member of group!"
