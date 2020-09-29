@@ -1,40 +1,51 @@
-# distributed-group-messenger
-Group messenger in distributed nodes.
+# Distributed group messenger
+Group messenger in large-scale distributed systems.
 
-Δουλεύει με software multicast. Υπάρχει πρόβλημα στο ότι δεν ενημερόνεται ένας client για νέα μέλη στο γκρουπ.(late joiner πρόβλημα).
+## Messages Ordering
 
-Έχει υλοποιηθεί με select και για παραλαβή μηνύματα και για εισαγωγή input. 
+### Fifo ordering
+The message delivery order at each process should preserve the message sending order from every process. But each process can deliver in a different order.
 
-Πρόβλημα: Αν έρθει μήνυμα καθώς γράφουμε μία εντολή στο τερματικό. Τότε ο buffer κρατάει αυτά γράφαμε αλλά δεν τα εμφανίζει μετά το μήνυμα.
+For example: 
 
-Πρώτη προτεραιότητα το ordering FIFO και Total ξεχωριστά.
-To total ordering γνεται με δύο τρόπους:
- -sequencer (Τρέχει σε ένα server)
- -ISIS (κατανεμημένος αλγόριθμος)
+- P1: m0, m1, m2
 
+- P2: m3, m4, m5
 
-## Giorgos: 
-  - !w fix
-  - λύση για το late joiner 
-## Manolis:
-  - Heartbeats 
-  - ordering
-## Panagiotis:
-  - ordering
-  
-  
-### Ordering links
+- P3: m6, m7, m8
 
-[FIFO και total ordering μαζί](https://github.com/ramanpreetSinghKhinda/CSE_586_Group_Messenger_TOTAL_FIFO_Ordering/blob/master/GroupMessenger2/app/src/main/java/edu/buffalo/cse/cse486586/groupmessenger2/GroupMessengerActivity.java)
+One of the FIFO ordering would be: 
 
-[total ordering ISIS C++](https://github.com/shamirwa/ISIS---Total-Order-Multicast-Algorithm)
+- P1: m0, m3, m6, m1, m2, m4, m7, m5, m8
 
-[total ordering ISIS C++](https://github.com/hikushalhere/IsisTotalOrderMulticast)
+- P2: m3, m0, m1, m4, m6, m7, m5, m2, m8
 
-[total ordering Sequencer python](https://github.com/evapujals/GroupCast)
+- P3: m6, m7, m8, m0, m1, m2, m3, m4, m5
 
-## Άλλα repos
-[Total ordering ISIS](https://github.com/search?utf8=%E2%9C%93&q=total+ordering+ISIS&type=)
+### Total ordering 
 
-[Total ordering python](https://github.com/search?l=Python&q=total+ordering&type=Repositories&utf8=%E2%9C%93)
+Every process delivers all messages in the same order. Here we don't care about any causal relationship of messages and as long as every process follows a single order we are fine.
 
+For example: 
+
+- P1: m0, m1, m2
+
+- P2: m3, m4, m5
+
+- P3: m6, m7, m8
+
+One of the TOTAL ordering would be: 
+
+- P1: m8, m1, m2, m4, m3, m5, m6, m0, m7
+
+- P2: m8, m1, m2, m4, m3, m5, m6, m0, m7
+
+- P3: m8, m1, m2, m4, m3, m5, m6, m0, m7
+
+#### Implmentation of total ordering
+- Sequencer: depend on centralized node
+- ISIS: distributed algorithm 
+
+## Network protocol between nodes
+- UDP or TCP
+- Software multicast 
